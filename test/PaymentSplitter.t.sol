@@ -19,11 +19,11 @@ contract PaymentSplitterTest is Setup {
     function setUp() public virtual override {
         Setup.setUp();
 
-        myContract = MyContract(
+        myContract = PaymentSplitter(
             _create3Factory.deploy(
                 keccak256(bytes("SALT")),
                 bytes.concat(
-                    type(MyContract).creationCode,
+                    type(PaymentSplitter).creationCode,
                     "" // constructor parameters encoded
                 )
             )
