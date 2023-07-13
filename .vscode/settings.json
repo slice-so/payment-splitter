@@ -1,0 +1,8 @@
+{
+  "solidity.compileUsingRemoteVersion": "0.8.20",
+  "editor.formatOnSave": true,
+  "[solidity]": {
+    "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
+  },
+  "solidity.formatter": "forge"
+}

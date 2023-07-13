@@ -1,0 +1,8 @@
+ds-test/=lib/forge-std/lib/ds-test/src/
+forge-std/=lib/forge-std/src/
+solmate/=lib/solmate/src/
+solady/=lib/solady/src/
+create3-factory/=lib/create3-factory/src/
+@prb/contracts/=lib/prb-contracts/src/
+@prb/test/=lib/prb-test/src/
+@openzeppelin/=lib/openzeppelin-contracts/contracts/
