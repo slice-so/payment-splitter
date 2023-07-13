@@ -9,7 +9,7 @@ import "@openzeppelin/token/ERC20/IERC20.sol";
 /// @author Dom-Mac <@zerohex_eth>
 /// @notice Additional description
 contract PaymentSplitter is IPaymentSplitter {
-  
+
   //*********************************************************************//
   // ---------------------------- storage ------------------------------ //
   //*********************************************************************//
@@ -73,6 +73,10 @@ contract PaymentSplitter is IPaymentSplitter {
 
   function executePayment(uint256 paymentId_) external {
     Payment memory payment = payments[paymentId_];
+
+    if (payment.paidAmount != payment.amount) {
+      revert AmountNotValid();
+    }
 
     if (payment.isPaid) {
       revert PaymentAlreadyPaid();
