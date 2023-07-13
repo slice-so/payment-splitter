@@ -3,14 +3,14 @@ pragma solidity ^0.8;
 
 import "forge-std/console2.sol";
 import "./helper/Setup.sol";
-import "contracts/MyContract.sol";
+import "contracts/PaymentSplitter.sol";
 
-contract MyContractTest is Setup {
+contract PaymentSplitterTest is Setup {
     //*********************************************************************//
     // ----------------------------- storage ----------------------------- //
     //*********************************************************************//
 
-    MyContract public myContract;
+    PaymentSplitter public myContract;
 
     //*********************************************************************//
     // ------------------------------ setup ------------------------------ //
