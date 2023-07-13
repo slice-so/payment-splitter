@@ -9,14 +9,10 @@ import "@openzeppelin/token/ERC20/IERC20.sol";
 /// @author Dom-Mac <@zerohex_eth>
 /// @notice Additional description
 contract PaymentSplitter is IPaymentSplitter {
-  error AmountNotValid();
-  error ReceiverNotValid();
-  error PaymentAlreadyPaid();
-  error PaymentNotExists();
-
-  event PaymentSplitterCreated(uint256 indexed paymentId_, address token_, address indexed receiver_, uint256 amount_, address indexed creator_);
-  event Deposit(address indexed contributor_, uint256 indexed paymentId_, uint256 amount_);
- 
+  
+  //*********************************************************************//
+  // ---------------------------- storage ------------------------------ //
+  //*********************************************************************//
   struct Payment {
     bool isPaid;
     address token;
@@ -30,6 +26,10 @@ contract PaymentSplitter is IPaymentSplitter {
   
   // constructor() ERC1155("https://") {
   // }
+
+  //*********************************************************************//
+  // ---------------------------- external ----------------------------- //
+  //*********************************************************************//
 
   function createPaymentSplitter(address token_, address receiver_, uint256 amount_) external {
     if (amount_ == 0) {
@@ -90,6 +90,10 @@ contract PaymentSplitter is IPaymentSplitter {
       }
     }
   }
+
+  //*********************************************************************//
+  // ---------------------------- internal ----------------------------- //
+  //*********************************************************************//
 
   function _beforeContribute(Payment memory payment_, uint256 amount_) internal pure {
       if (payment_.amount == 0) {
