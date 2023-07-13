@@ -2,13 +2,13 @@
 pragma solidity ^0.8;
 
 import "./interfaces/IPaymentSplitter.sol";
-// import "@openzeppelin/token/ERC1155/extensions/ERC1155Supply.sol";
+import "@openzeppelin/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/token/ERC20/IERC20.sol";
 
 /// @title One-liner contract description
 /// @author Dom-Mac <@zerohex_eth>
 /// @notice Additional description
-contract PaymentSplitter is IPaymentSplitter {
+contract PaymentSplitter is ERC1155, IPaymentSplitter {
 
   //*********************************************************************//
   // ---------------------------- storage ------------------------------ //
@@ -24,8 +24,8 @@ contract PaymentSplitter is IPaymentSplitter {
   mapping(uint256 => Payment) public payments;
   uint256 public paymentCount = 1;
   
-  // constructor() ERC1155("https://") {
-  // }
+  constructor() ERC1155("https://") {
+  }
 
   //*********************************************************************//
   // ---------------------------- external ----------------------------- //
@@ -54,13 +54,16 @@ contract PaymentSplitter is IPaymentSplitter {
 
     payments[paymentId_] = payment;
 
-    // _mint(msg.sender, paymentId_, amount_, "");
+    _mint(msg.sender, paymentId_, amount_, "");
 
     if (payment.token == address(0)) {
       if (msg.value != amount_) {
         revert AmountNotValid();
       }
     } else {
+      if (msg.value != 0) {
+        revert AmountNotValid();
+      }
       bool success = IERC20(payment.token).transferFrom(msg.sender, address(this), amount_);
 
       if (!success || payment.paidAmount + amount_ > payment.amount) {
@@ -88,6 +91,32 @@ contract PaymentSplitter is IPaymentSplitter {
       payable(payment.receiver).transfer(payment.amount);
     } else {
       bool success = IERC20(payment.token).transfer(payment.receiver, payment.amount);
+
+      if (!success) {
+        revert AmountNotValid(); // TODO: better error handling
+      }
+    }
+  }
+
+  function redeem(uint256 paymentId_, uint256 amount_) external {
+    Payment memory payment = payments[paymentId_];
+
+    if (payment.isPaid) {
+      revert PaymentAlreadyPaid();
+    }
+
+    uint256 balance = balanceOf(msg.sender, paymentId_);
+
+    if (balance < amount_) {
+      revert AmountNotValid();
+    }
+
+    payments[paymentId_].paidAmount -= amount_;
+
+    if (payment.token == address(0)) {
+      payable(msg.sender).transfer(amount_);
+    } else {
+      bool success = IERC20(payment.token).transfer(msg.sender, amount_);
 
       if (!success) {
         revert AmountNotValid(); // TODO: better error handling
