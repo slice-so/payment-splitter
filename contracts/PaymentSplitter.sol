@@ -111,6 +111,7 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
       revert AmountNotValid();
     }
 
+    _burn(msg.sender, paymentId_, amount_);
     payments[paymentId_].paidAmount -= amount_;
 
     if (payment.token == address(0)) {
