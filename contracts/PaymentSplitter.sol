@@ -2,7 +2,7 @@
 pragma solidity ^0.8;
 
 import "./interfaces/IPaymentSplitter.sol";
-import "@openzeppelin/token/ERC1155/extensions/ERC1155Supply.sol";
+// import "@openzeppelin/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/token/ERC20/IERC20.sol";
 
 /// @title One-liner contract description
