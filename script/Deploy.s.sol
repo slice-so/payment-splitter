@@ -13,7 +13,7 @@ contract DeployScript is Script {
     function run() public returns (PaymentSplitter myContract) {
         vm.startBroadcast(deployerPrivateKey);
 
-        myContract = MyContract(create3Factory.deploy(salt, bytes.concat(type(PaymentSplitter).creationCode)));
+        myContract = PaymentSplitter(create3Factory.deploy(salt, bytes.concat(type(PaymentSplitter).creationCode)));
 
         vm.stopBroadcast();
     }
