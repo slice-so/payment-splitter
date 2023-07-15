@@ -106,7 +106,7 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
         }
 
         if (payment.isPaid) {
-            revert PaymentAlreadyPaid();
+            revert PaymentAlreadyExecuted();
         }
 
         payments[paymentId].isPaid = true;
@@ -126,12 +126,10 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
         Payment memory payment = payments[paymentId];
 
         if (payment.isPaid) {
-            revert PaymentAlreadyPaid();
+            revert PaymentAlreadyExecuted();
         }
 
-        uint256 balance = balanceOf[msg.sender][paymentId];
-
-        if (balance < amount) {
+        if (balanceOf[msg.sender][paymentId] < amount) {
             revert AmountNotValid();
         }
 
@@ -155,15 +153,13 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
 
     function _beforeContribute(Payment memory payment, uint256 amount) internal pure {
         if (payment.targetAmount == 0) {
-            revert PaymentNotExists();
+            revert InvalidTargetAmount();
         }
 
-        if (payment.isPaid) {
-            revert PaymentAlreadyPaid();
-        }
-
-        if (amount == 0 || amount > payment.targetAmount - payment.depositedAmount) {
-            revert AmountNotValid();
+        unchecked {
+            if (amount == 0 || amount > payment.targetAmount - payment.depositedAmount) {
+                revert AmountNotValid();
+            }
         }
     }
 

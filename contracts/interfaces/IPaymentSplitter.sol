@@ -8,8 +8,8 @@ interface IPaymentSplitter {
 
     error AmountNotValid();
     error ReceiverNotValid();
-    error PaymentAlreadyPaid();
-    error PaymentNotExists();
+    error PaymentAlreadyExecuted();
+    error InvalidTargetAmount();
     error EthNotAccepted();
     error NotEnoughFunds();
     error TransferFailed();
