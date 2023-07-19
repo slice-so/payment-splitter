@@ -9,7 +9,7 @@ interface IPaymentSplitter {
     error AmountNotValid();
     error ReceiverNotValid();
     error PaymentAlreadyExecuted();
-    error InvalidTargetAmount();
+    error InvalidPaymentId();
     error EthNotAccepted();
     error NotEnoughFunds();
     error TransferFailed();
@@ -37,5 +37,5 @@ interface IPaymentSplitter {
 
     function executePayment(uint256 paymentId_) external;
 
-    function redeem(uint256 paymentId_, uint256 amount_) external;
+    function withdraw(uint256 paymentId_, uint256 amount_) external;
 }

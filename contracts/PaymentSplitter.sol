@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8;
+pragma solidity ^0.8.19;
 
 import {Payment} from "./structs/Payment.sol";
 import {IPaymentSplitter} from "./interfaces/IPaymentSplitter.sol";
@@ -9,13 +9,14 @@ import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 /// @title One-liner contract description
 /// @author Dom-Mac <@zerohex_eth>
-/// @notice Additional description
+/// @notice When deposited amount strictly equals target amount execution is enabled
 contract PaymentSplitter is ERC1155, IPaymentSplitter {
     /*//////////////////////////////////////////////////////////////
                                 STORAGE
     //////////////////////////////////////////////////////////////*/
 
     mapping(uint256 => Payment) public payments;
+    mapping(bytes32 refHash => uint256 paymentId) refCheck;
     uint256 public paymentCount;
 
     /*//////////////////////////////////////////////////////////////
@@ -37,54 +38,61 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
      *
      * @return paymentId Id of the created payment
      */
-    function createPayment(address token, address receiver, uint256 targetAmount) public returns (uint256 paymentId) {
+    function createPayment(address token, address receiver, uint256 targetAmount, bytes32 ref)
+        public
+        returns (uint256 paymentId)
+    {
         unchecked {
             paymentId = ++paymentCount;
-
-            if (targetAmount == 0) {
-                revert AmountNotValid();
-            }
-
-            if (receiver == address(0)) {
-                revert ReceiverNotValid();
-            }
-
-            payments[paymentCount] = Payment({
-                isPaid: false,
-                token: token,
-                receiver: receiver,
-                targetAmount: targetAmount.toUint128(),
-                depositedAmount: 0
-            });
-
-            emit PaymentCreated(paymentCount, token, receiver, targetAmount, msg.sender);
         }
+
+        if (targetAmount == 0) {
+            revert AmountNotValid();
+        }
+
+        if (receiver == address(0)) {
+            revert ReceiverNotValid();
+        }
+
+        payments[paymentCount] = Payment({
+            isPaid: false,
+            token: token,
+            receiver: receiver,
+            targetAmount: targetAmount.toUint128(),
+            depositedAmount: 0
+        });
+
+        emit PaymentCreated(paymentCount, token, receiver, targetAmount, msg.sender);
     }
 
     function createPaymentAndDeposit(address token, address receiver, uint256 targetAmount, uint256 depositAmount)
         public
         payable
     {
-        uint256 paymentId = createPayment(token, receiver, targetAmount);
+        uint256 paymentId = createPayment(token, receiver, targetAmount, 0);
         deposit(paymentId, depositAmount);
     }
 
     function deposit(uint256 paymentId, uint256 amount) public payable {
         Payment memory payment = payments[paymentId];
 
+        if (payment.token == address(0)) {
+            amount = msg.value;
+        }
+
         _beforeContribute(payment, amount);
 
-        payment.depositedAmount += amount.toUint128();
-
-        payments[paymentId] = payment;
+        /**
+         * @dev deposited `amount` cannot overflow as amount is always lower
+         *      than `targetAmount - depositedAmount`
+         */
+        unchecked {
+            payments[paymentId].depositedAmount += amount.toUint128();
+        }
 
         _mint(msg.sender, paymentId, amount, "");
 
-        if (payment.token == address(0)) {
-            if (msg.value != amount) {
-                revert AmountNotValid();
-            }
-        } else {
+        if (payment.token != address(0)) {
             if (msg.value != 0) {
                 revert EthNotAccepted();
             }
@@ -120,9 +128,14 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
                 revert TransferFailed();
             }
         }
+
+        refHash = keccak256(abi.encode(receiver, paymentId, ref, targetAmount));
+
+        if (refCheck[refHash] != 0) revert("Already used");
+        refCheck[refHash] = paymentId;
     }
 
-    function redeem(uint256 paymentId, uint256 amount) external {
+    function withdraw(uint256 paymentId, uint256 amount) external {
         Payment memory payment = payments[paymentId];
 
         if (payment.isPaid) {
@@ -153,7 +166,7 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
 
     function _beforeContribute(Payment memory payment, uint256 amount) internal pure {
         if (payment.targetAmount == 0) {
-            revert InvalidTargetAmount();
+            revert InvalidPaymentId();
         }
 
         unchecked {
