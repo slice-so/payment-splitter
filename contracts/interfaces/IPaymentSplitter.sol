@@ -19,23 +19,29 @@ interface IPaymentSplitter {
     //////////////////////////////////////////////////////////////*/
 
     event PaymentCreated(
-        uint256 indexed paymentId_, address token_, address indexed receiver_, uint256 amount_, address indexed creator_
+        uint256 indexed paymentId, address token, address indexed receiver, uint256 amount, address indexed creator
     );
-    event Deposit(address indexed contributor_, uint256 indexed paymentId_, uint256 amount_);
+    event Deposit(address indexed contributor, uint256 indexed paymentId, uint256 amount);
+    event PaymentExecuted(
+        uint256 indexed paymentId, address indexed receiver, uint256 amount, address indexed executor
+    );
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function createPayment(address token_, address receiver_, uint256 amount_) external returns (uint256 paymentId);
+    function createPayment(address token, address receiver, uint256 amount) external returns (uint256 paymentId);
 
-    function createPaymentAndDeposit(address token_, address receiver_, uint256 amount_, uint256 depositAmount_)
+    function createPaymentAndDeposit(address token, address receiver, uint256 amount, uint256 depositAmount)
         external
-        payable;
+        payable
+        returns (uint256 paymentId);
 
-    function deposit(uint256 paymentId_, uint256 amount_) external payable;
+    function deposit(uint256 paymentId, uint256 amount) external payable;
 
-    function executePayment(uint256 paymentId_) external;
+    function executePayment(uint256 paymentId) external;
 
-    function withdraw(uint256 paymentId_, uint256 amount_) external;
+    function depositAndExecutePayment(uint256 paymentId) external payable;
+
+    function withdraw(uint256 paymentId, uint256 amount) external;
 }

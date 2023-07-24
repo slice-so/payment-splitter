@@ -16,7 +16,6 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
     //////////////////////////////////////////////////////////////*/
 
     mapping(uint256 => Payment) public payments;
-    mapping(bytes32 refHash => uint256 paymentId) refCheck;
     uint256 public paymentCount;
 
     /*//////////////////////////////////////////////////////////////
@@ -32,16 +31,13 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
     /**
      * @notice Creates a new payment intend
      *
-     * @param token Address of the token to be used for the payment, or 0x0 for ETH
-     * @param receiver Address of the receiver of the payment
-     * @param targetAmount Amount of the payment
+     * @param token Address of the `token` to be used for the payment, or 0x0 for ETH
+     * @param receiver Address of the `receiver` of the payment
+     * @param targetAmount Amount due to the `receiver`
      *
      * @return paymentId Id of the created payment
      */
-    function createPayment(address token, address receiver, uint256 targetAmount, bytes32 ref)
-        public
-        returns (uint256 paymentId)
-    {
+    function createPayment(address token, address receiver, uint256 targetAmount) public returns (uint256 paymentId) {
         unchecked {
             paymentId = ++paymentCount;
         }
@@ -65,14 +61,12 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
         emit PaymentCreated(paymentCount, token, receiver, targetAmount, msg.sender);
     }
 
-    function createPaymentAndDeposit(address token, address receiver, uint256 targetAmount, uint256 depositAmount)
-        public
-        payable
-    {
-        uint256 paymentId = createPayment(token, receiver, targetAmount, 0);
-        deposit(paymentId, depositAmount);
-    }
-
+    /**
+     * @notice Deposits `amount` to the payment with id `paymentId`
+     *
+     * @param paymentId Id of the payment
+     * @param amount Amount to be deposited
+     */
     function deposit(uint256 paymentId, uint256 amount) public payable {
         Payment memory payment = payments[paymentId];
 
@@ -106,7 +100,26 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
         emit Deposit(msg.sender, paymentId, amount);
     }
 
-    function executePayment(uint256 paymentId) external {
+    /**
+     * @notice Creates a new payment intend and deposits `depositAmount` to it
+     *        in the same transaction
+     * @dev `msg.value` is used as `depositAmount` if `token` is ETH
+     */
+    function createPaymentAndDeposit(address token, address receiver, uint256 targetAmount, uint256 depositAmount)
+        public
+        payable
+        returns (uint256 paymentId)
+    {
+        paymentId = createPayment(token, receiver, targetAmount);
+        deposit(paymentId, depositAmount);
+    }
+
+    /**
+     * @notice Executes the payment with id `paymentId`
+     *
+     * @param paymentId Id of the payment
+     */
+    function executePayment(uint256 paymentId) public {
         Payment memory payment = payments[paymentId];
 
         if (payment.depositedAmount != payment.targetAmount) {
@@ -129,12 +142,37 @@ contract PaymentSplitter is ERC1155, IPaymentSplitter {
             }
         }
 
-        refHash = keccak256(abi.encode(receiver, paymentId, ref, targetAmount));
-
-        if (refCheck[refHash] != 0) revert("Already used");
-        refCheck[refHash] = paymentId;
+        emit PaymentExecuted(paymentId, payment.receiver, payment.targetAmount, msg.sender);
     }
 
+    /**
+     * @notice Deposits remaining amount to be payed
+     *         to the payment with id `paymentId`
+     *         and executes it in the same transaction
+     *
+     * @param paymentId Id of the payment
+     */
+    function depositAndExecutePayment(uint256 paymentId) external payable {
+        uint256 amount;
+        /**
+         * @dev deposited `amount` cannot underflow as `targetAmount` is always lower
+         *      than `depositedAmount`
+         */
+        Payment memory payment = payments[paymentId];
+        unchecked {
+            amount = payment.targetAmount - payment.depositedAmount;
+        }
+        deposit(paymentId, amount);
+        executePayment(paymentId);
+    }
+
+    /**
+     * @notice Withdraws `amount` from the payment with id `paymentId`
+     *         and burns the same amount of ERC1155
+     *
+     * @param paymentId Id of the payment
+     * @param amount Amount to be withdrawn
+     */
     function withdraw(uint256 paymentId, uint256 amount) external {
         Payment memory payment = payments[paymentId];
 
