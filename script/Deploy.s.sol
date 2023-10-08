@@ -6,7 +6,7 @@ import {CREATE3Factory} from "create3-factory/CREATE3Factory.sol";
 import {PaymentSplitter} from "contracts/PaymentSplitter.sol";
 
 contract DeployScript is Script {
-    CREATE3Factory create3Factory = CREATE3Factory(0x9fBB3DF7C40Da2e5A0dE984fFE2CCB7C47cd0ABf);
+    CREATE3Factory create3Factory = CREATE3Factory(0x8Ae72A2311A7d225B6CA7B4fdfb355CdBf64E647);
     bytes32 salt = keccak256(bytes(vm.envString("SALT")));
     uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
