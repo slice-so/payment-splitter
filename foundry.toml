@@ -7,6 +7,7 @@ fs_permissions = [{ access = "read", path = "./deployments/"}]
 goerli = "${RPC_URL_GOERLI}"
 mainnet = "${RPC_URL_MAINNET}"
 poly_zk_test = "https://rpc.public.zkevm-test.net"
+poly_zk = "https://zkevm-rpc.com"
 
 [etherscan]
 goerli = {key = "${ETHERSCAN_API_KEY}", url = "https://api-goerli.etherscan.io/api"}
